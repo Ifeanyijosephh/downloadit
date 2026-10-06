@@ -9,19 +9,30 @@ export interface EngineTarget {
 
 const tryRun = (cmd: string, args: string[]): boolean => {
   try {
-    const r = spawnSync(cmd, args, { timeout: 1000, stdio: 'ignore' });
+    // Python-based yt-dlp startup can exceed 1s on a cold cache; give it room
+    // so discovery does not intermittently (and wrongly) report "unavailable".
+    const r = spawnSync(cmd, args, { timeout: 5000, stdio: 'ignore' });
     return r.status === 0;
   } catch {
     return false;
   }
 };
 
-/** Resolve the yt-dlp command without hanging (§9.1). */
+let targetCache: EngineTarget | null | undefined;
+
+/** Resolve the yt-dlp command without hanging (§9.1). Result is cached. */
 export function resolveYtDlp(cfg: Config): EngineTarget | null {
   if (cfg.ytDlpPath) return { cmd: cfg.ytDlpPath, prefix: [] };
-  if (tryRun('yt-dlp', ['--version'])) return { cmd: 'yt-dlp', prefix: [] };
-  if (tryRun('python3', ['-m', 'yt_dlp', '--version']))
-    return { cmd: 'python3', prefix: ['-m', 'yt_dlp'] };
+  if (targetCache !== undefined) return targetCache;
+  if (tryRun('yt-dlp', ['--version'])) {
+    targetCache = { cmd: 'yt-dlp', prefix: [] };
+    return targetCache;
+  }
+  if (tryRun('python3', ['-m', 'yt_dlp', '--version'])) {
+    targetCache = { cmd: 'python3', prefix: ['-m', 'yt_dlp'] };
+    return targetCache;
+  }
+  targetCache = null;
   return null;
 }
 
@@ -47,6 +58,7 @@ export function hasFfmpeg(cfg: Config): boolean {
 export const _resetEngineCache = (): void => {
   ytDlpCache = null;
   ffmpegCache = null;
+  targetCache = undefined;
 };
 
 let versionCache: string | null | undefined;
@@ -61,7 +73,7 @@ export function engineVersion(cfg: Config): string | null {
   }
   try {
     const r = spawnSync(target.cmd, [...target.prefix, '--version'], {
-      timeout: 1000,
+      timeout: 5000,
       encoding: 'utf8',
     });
     versionCache = r.status === 0 ? (r.stdout || '').trim().split('\n')[0] ?? null : null;

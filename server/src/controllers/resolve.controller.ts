@@ -58,8 +58,12 @@ export function resolveController(cfg: Config, limiter: RateLimiter) {
       });
     } catch (err) {
       const e = err as NodeJS.ErrnoException & { stderr?: string; engineUnavailable?: boolean };
-      // Debug: show the engine's raw stderr so failures are diagnosable in the terminal.
-      if (e.stderr) console.error(`[resolve] engine stderr: ${String(e.stderr).split('\n')[0]}`);
+      // Debug: show the engine's real error line so failures are diagnosable.
+      if (e.stderr) {
+        const lines = String(e.stderr).split('\n').map((l) => l.trim()).filter(Boolean);
+        const errLine = lines.find((l) => /^ERROR\b/i.test(l)) || lines[lines.length - 1] || '';
+        console.error(`[resolve] engine stderr: ${errLine}`);
+      }
       if (e.engineUnavailable) {
         res.status(503).json({ code: 'ENGINE_UNAVAILABLE', hint: 'The download engine is not available.' });
         return;

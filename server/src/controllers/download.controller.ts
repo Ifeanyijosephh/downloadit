@@ -166,7 +166,11 @@ export function downloadController(cfg: Config, limiter: RateLimiter, queue: Que
       if (!headersSent) {
         // Engine exited before producing a byte -> a real error we can report.
         const text = Buffer.concat(stderrChunks).toString('utf8');
-        if (text) console.error(`[download] engine stderr: ${text.split('\n')[0]}`);
+        if (text) {
+          const lines = text.split('\n').map((l) => l.trim()).filter(Boolean);
+          const errLine = lines.find((l) => /^ERROR\b/i.test(l)) || lines[lines.length - 1] || '';
+          console.error(`[download] engine stderr: ${errLine}`);
+        }
         if (code === 0) {
           failPreByte('EMPTY_RESPONSE', 'The engine returned no data.', 502);
         } else {
