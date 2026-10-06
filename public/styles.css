@@ -20,6 +20,7 @@
   --success: #15803d; --success-soft: #e8f7ed; --danger: #b91c1c; --danger-soft: #fdeced;
   --scrim: rgba(6, 12, 24, 0.74); --focus: #2563eb;
   --hero-ink: #ffffff; --hero-muted: #e6ecf7; --hero-faint: #cdd8ea;
+  --on-accent-12: rgba(255, 255, 255, 0.12); --on-accent-22: rgba(255, 255, 255, 0.22);
 
   --radius-sm: 8px; --radius-md: 12px; --radius-lg: 18px; --radius-xl: 26px;
   --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px; --space-7: 48px; --space-8: 64px;
@@ -228,4 +229,69 @@ dialog::backdrop { background: var(--scrim); }
 @media (prefers-contrast: more) {
   :root { --border: var(--text-faint); --border-strong: var(--text-muted); --control-border: var(--text-muted); }
   .card { box-shadow: none; }
+}
+
+/* ---------------------------------------------------------------- motion -- */
+/* Floating, faded social icons in the hero background (replaces the video). */
+.hero-float { position: absolute; inset: 0; overflow: hidden; }
+.hero-float-icon {
+  position: absolute;
+  opacity: 0.13;
+  filter: brightness(0) invert(1);
+  animation: heroFloat 14s ease-in-out infinite;
+  will-change: transform;
+}
+@keyframes heroFloat {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  50% { transform: translate3d(0, -26px, 0) rotate(8deg); }
+}
+
+/* Real brand logos in the platforms grid: monochrome, theme-aware, animated. */
+.plat-logo { width: 40px; height: 40px; display: block; margin-bottom: var(--space-3); transition: transform var(--dur-base) var(--ease); }
+:root[data-theme="dark"] .plat-logo { filter: brightness(0) invert(1); }
+.plat:hover .plat-logo { transform: scale(1.14) rotate(-5deg); }
+
+/* Result card reveal after the engine fetches. */
+#resultCard:not([hidden]) { animation: cardIn 0.5s var(--ease) both; }
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(14px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Sponsored promo card — blue & white. */
+.promo-card {
+  margin-top: var(--space-4);
+  display: flex; align-items: center; gap: var(--space-4); flex-wrap: wrap;
+  position: relative; overflow: hidden;
+  background: linear-gradient(120deg, var(--accent), var(--accent-strong));
+  color: var(--on-accent);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-2);
+}
+.promo-card::after {
+  content: ""; position: absolute; right: -48px; top: -48px;
+  width: 180px; height: 180px; border-radius: 50%;
+  background: var(--on-accent-12);
+}
+.promo-badge {
+  font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em;
+  background: var(--on-accent-22); padding: 0.25rem 0.6rem; border-radius: 999px;
+  align-self: flex-start;
+}
+.promo-body { flex: 1 1 260px; position: relative; z-index: 1; }
+.promo-body h3 { margin: 0.15rem 0; font-size: var(--fs-lg); line-height: 1.25; }
+.promo-body p { margin: 0; opacity: 0.92; font-size: var(--fs-sm); }
+.promo-btn {
+  position: relative; z-index: 1;
+  background: var(--on-accent); color: var(--accent-strong);
+  padding: 0.6rem 1.05rem; border-radius: 999px; font-weight: 600; text-decoration: none; white-space: nowrap;
+  box-shadow: var(--shadow-1);
+  transition: transform var(--dur-fast) var(--ease), box-shadow var(--dur-base) var(--ease);
+}
+.promo-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-2); }
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-float-icon { animation: none; }
+  #resultCard:not([hidden]) { animation: none; }
 }

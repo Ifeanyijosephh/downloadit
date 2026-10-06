@@ -22,6 +22,44 @@ initTheme({
 // theme-boot.js themed the document before paint; now reveal the body.
 document.body.removeAttribute('hidden');
 
+/* ---------------------------------------------------------- hero + motion -- */
+(function initHeroAndMotion() {
+  // Floating, faded social icons in the hero background (replaces the video).
+  const floatWrap = document.getElementById('heroFloat');
+  if (floatWrap) {
+    const brands = ['youtube', 'instagram', 'tiktok', 'x', 'facebook', 'vimeo', 'snapchat', 'pinterest', 'reddit', 'soundcloud', 'twitch', 'dailymotion'];
+    const spots = [[6, 12, 72], [78, 8, 60], [16, 68, 54], [86, 64, 68], [40, 18, 48], [62, 80, 58],
+      [28, 42, 44], [92, 36, 50], [8, 88, 46], [70, 46, 40], [50, 62, 52], [22, 16, 42]];
+    brands.forEach((b, i) => {
+      const s = spots[i % spots.length];
+      const img = document.createElement('img');
+      img.src = `/brands/${b}.svg`;
+      img.alt = '';
+      img.setAttribute('aria-hidden', 'true');
+      img.className = 'hero-float-icon';
+      img.style.left = s[0] + '%';
+      img.style.top = s[1] + '%';
+      img.style.width = s[2] + 'px';
+      img.style.height = s[2] + 'px';
+      img.style.animationDelay = (i * 0.7).toFixed(1) + 's';
+      floatWrap.appendChild(img);
+    });
+  }
+  // AOS scroll reveals (respect reduced-motion).
+  if (window.AOS && typeof window.AOS.init === 'function') {
+    window.AOS.init({
+      duration: 700,
+      easing: 'ease-out-cubic',
+      once: true,
+      offset: 60,
+      disable: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    });
+  } else {
+    // Fallback: never leave [data-aos] content invisible if AOS didn't load.
+    document.querySelectorAll('[data-aos]').forEach((el) => el.classList.add('aos-animate'));
+  }
+})();
+
 /* ------------------------------------------------------------------ store -- */
 let state = INITIAL;
 const guard = createRunGuard();
@@ -46,6 +84,22 @@ const dialogClose = $('#dialogClose');
 const dialogCancel = $('#dialogCancel');
 const progressFill = $('#progressFill');
 const progressText = $('#progressText');
+
+/* --------------------------------------------------------- friendly errors -- */
+// Turn any failure into a patient, human message + a clear "try again" nudge.
+// Raw server codes/hints are never shown to the user.
+function friendlyMessage(error) {
+  const code = error && error.code;
+  const specific = {
+    LOGIN_REQUIRED: 'This one needs a login, so we can\u2019t fetch it here. Please try a public link.',
+    AGE_RESTRICTED: 'This video is age-restricted, so it can\u2019t be downloaded here.',
+    PRIVATE_VIDEO: 'That video looks private or was removed. Please try a public link.',
+    NOT_FOUND: 'We couldn\u2019t find that video. Double-check the link and try again.',
+    URL_BLOCKED: 'That link isn\u2019t allowed. Please use a public video URL.',
+  };
+  if (specific[code]) return specific[code];
+  return 'Hang tight \u2014 the platform seems busy or the connection dropped. Please give it a moment and try again.';
+}
 
 /* ----------------------------------------------------------------- render -- */
 function render() {
@@ -77,11 +131,11 @@ function render() {
     resultCard.hidden = true;
   }
 
-  // Error line.
+  // Error line — always a calm, patient, human message (never raw server codes).
   const errLine = $('#errorLine');
   if (state.status === 'error' && state.error) {
     errLine.hidden = false;
-    errLine.textContent = `[${state.error.code}] ${state.error.hint}`;
+    errLine.textContent = friendlyMessage(state.error);
     $('#retryBtn').hidden = false;
   } else {
     errLine.hidden = true;
