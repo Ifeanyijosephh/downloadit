@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en" data-no-theme>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DownloadIt — save any public video · Built by Ifeco Digitals</title>
+
+  <meta name="author" content="Ifeco Digitals" />
+  <meta name="generator" content="Ifeco Digitals" />
+  <meta name="application-name" content="DownloadIt" />
+  <meta property="og:site_name" content="DownloadIt" />
+  <meta property="og:title" content="DownloadIt — save any public video" />
+  <meta property="og:description" content="Turn a public video URL into a downloadable MP4 or MP3. No account, no ads, nothing stored." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="/assets/og-cover.png" />
+
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#060a12" media="(prefers-color-scheme: dark)" />
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png" />
+  <link rel="icon" type="image/x-icon" href="/assets/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon-180.png" />
+
+  <!-- Theme the document before first paint (no flash, CSP-safe). -->
+  <script src="/theme-boot.js"></script>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body hidden>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="shell header-row">
+      <div class="brand">
+        <img src="/assets/icons/3d/download.png" srcset="/assets/icons/3d/download@2x.png 2x" width="56" height="56" alt="" aria-hidden="true" class="brand-mark" />
+        <span class="brand-name">DownloadIt</span>
+        <span class="brand-by">by Ifeco Digitals</span>
+      </div>
+      <nav class="nav" id="nav" aria-label="Primary">
+        <a href="#how">How it works</a>
+        <a href="#platforms">Platforms</a>
+        <a href="#promise">Promise</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+      <div class="header-actions">
+        <button id="navToggle" class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
+        <button id="themeToggle" type="button" class="theme-toggle" aria-label="Dark theme" aria-pressed="false">
+          <img src="/assets/icons/3d/theme-light.png" srcset="/assets/icons/3d/theme-light@2x.png 2x" width="56" height="56" alt="" aria-hidden="true" class="icon-light" />
+          <img src="/assets/icons/3d/theme-dark.png" srcset="/assets/icons/3d/theme-dark@2x.png 2x" width="56" height="56" alt="" aria-hidden="true" class="icon-dark" />
+          <span class="theme-text"></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero-media" aria-hidden="true">
+        <video autoplay muted loop playsinline preload="metadata" poster="/assets/hero-poster.webp" tabindex="-1" id="heroVideo">
+          <source src="/assets/hero-background.mp4" type="video/mp4" />
+        </video>
+        <span class="hero-overlay"></span>
+      </div>
+      <div class="shell hero-inner">
+        <h1 class="hero-title">Save any public video.</h1>
+        <p class="hero-sub">Paste a link, get an MP4 or MP3. No account, no ads, nothing stored.</p>
+
+        <form id="urlForm" class="url-form" autocomplete="off">
+          <label class="visually-hidden" for="urlInput">Video URL</label>
+          <input id="urlInput" name="url" type="url" inputmode="url" placeholder="https://www.youtube.com/watch?v=…" required />
+          <button id="submitBtn" type="submit" class="btn btn-primary btn-wide" disabled>
+            <span data-spinner hidden class="spinner" aria-hidden="true"></span>
+            <span class="btn-label">Get video</span>
+          </button>
+        </form>
+        <p id="formStatus" class="form-status" role="status" aria-live="polite"></p>
+
+        <p class="hero-attr">Built and powered by Ifeco Digitals</p>
+      </div>
+    </section>
+
+    <!-- Result / error (reserved slots, no layout shift) -->
+    <section class="shell result-shell">
+      <div id="errorLine" class="error-line" role="alert" hidden></div>
+      <button id="retryBtn" type="button" class="btn btn-ghost" hidden>Retry</button>
+
+      <article id="resultCard" class="card result-card" hidden>
+        <img id="resThumb" class="result-thumb" alt="" width="160" height="90" referrerpolicy="no-referrer" loading="lazy" decoding="async" hidden />
+        <div class="result-body">
+          <h2 id="resTitle" class="result-title">—</h2>
+          <p id="resAuthor" class="result-author"></p>
+          <p id="resMeta" class="result-meta mono"></p>
+        </div>
+        <div class="result-actions">
+          <button id="btnMp4" type="button" class="btn btn-primary">
+            <img src="/assets/icons/3d/download.png" srcset="/assets/icons/3d/download@2x.png 2x" width="56" height="56" alt="" aria-hidden="true" class="btn-icon" />
+            MP4
+          </button>
+          <button id="btnMp3" type="button" class="btn btn-secondary">MP3</button>
+        </div>
+      </article>
+    </section>
+
+    <!-- How it works -->
+    <section id="how" class="shell section">
+      <h2>How it works</h2>
+      <ol class="steps">
+        <li class="card step"><img src="/assets/icons/3d/search.png" srcset="/assets/icons/3d/search@2x.png 2x" width="56" height="56" alt="" aria-hidden="true" class="step-icon" /><h3>Paste</h3><p>Drop in a public video link from any supported platform.</p></li>
+        <li class="card step"><img src="/assets/icons/3d/download.png" srcset="/assets/icons/3d/download@2x.png 2x" width="56" height="56" alt="" aria-hidden="true" class="step-icon" /><h3>Preview</h3><p>We fetch the title, length and formats so you know what you'll get.</p></li>
+        <li class="card step"><img src="/assets/icons/3d/theme-light.png" srcset="/assets/icons/3d/theme-light@2x.png 2x" width="56" height="56" alt="" aria-hidden="true" class="step-icon" /><h3>Save</h3><p>Choose MP4 or MP3 and the file downloads straight to your device.</p></li>
+      </ol>
+    </section>
+
+    <!-- Platforms -->
+    <section id="platforms" class="shell section">
+      <h2>Supported platforms</h2>
+      <ul class="platforms">
+        <li class="card plat"><img src="/assets/icons/3d/youtube.png" srcset="/assets/icons/3d/youtube@2x.png 2x" width="56" height="56" alt="" aria-hidden="true" class="plat-icon" /><span>YouTube</span></li>
+        <li class="card plat"><img src="/assets/icons/3d/instagram.png" srcset="/assets/icons/3d/instagram@2x.png 2x" width="56" height="56" alt="" aria-hidden="true" class="plat-icon" /><span>Instagram</span></li>
+        <li class="card plat"><img src="/assets/icons/3d/tiktok.png" srcset="/assets/icons/3d/tiktok@2x.png 2x" width="56" height="56" alt="" aria-hidden="true" class="plat-icon" /><span>TikTok</span></li>
+        <li class="card plat"><img src="/assets/icons/3d/x.png" srcset="/assets/icons/3d/x@2x.png 2x" width="56" height="56" alt="" aria-hidden="true" class="plat-icon" /><span>X / Twitter</span></li>
+        <li class="card plat"><img src="/assets/icons/3d/facebook.png" srcset="/assets/icons/3d/facebook@2x.png 2x" width="56" height="56" alt="" aria-hidden="true" class="plat-icon" /><span>Facebook</span></li>
+        <li class="card plat"><img src="/assets/icons/3d/vimeo.png" srcset="/assets/icons/3d/vimeo@2x.png 2x" width="56" height="56" alt="" aria-hidden="true" class="plat-icon" /><span>Vimeo</span></li>
+        <li class="card plat"><img src="/assets/icons/3d/snapchat.png" srcset="/assets/icons/3d/snapchat@2x.png 2x" width="56" height="56" alt="" aria-hidden="true" class="plat-icon" /><span>Snapchat</span></li>
+        <li class="card plat"><img src="/assets/icons/3d/pinterest.png" srcset="/assets/icons/3d/pinterest@2x.png 2x" width="56" height="56" alt="" aria-hidden="true" class="plat-icon" /><span>Pinterest</span></li>
+        <li class="card plat"><img src="/assets/icons/3d/reddit.png" srcset="/assets/icons/3d/reddit@2x.png 2x" width="56" height="56" alt="" aria-hidden="true" class="plat-icon" /><span>Reddit</span></li>
+        <li class="card plat"><img src="/assets/icons/3d/linkedin.png" srcset="/assets/icons/3d/linkedin@2x.png 2x" width="56" height="56" alt="" aria-hidden="true" class="plat-icon" /><span>LinkedIn</span></li>
+      </ul>
+    </section>
+
+    <!-- Promise -->
+    <section id="promise" class="shell section">
+      <h2>Our promise</h2>
+      <div class="promise-grid">
+        <div class="card"><h3>Private by design</h3><p>No accounts, no history, no databases. URLs are processed in memory and never stored.</p></div>
+        <div class="card"><h3>Honest progress</h3><p>Real loading states and real errors. If something fails, we say so and let you retry.</p></div>
+        <div class="card"><h3>Fast &amp; accessible</h3><p>One input, one button. Works with a keyboard and screen reader, in light and dark.</p></div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section id="faq" class="shell section">
+      <h2>FAQ</h2>
+      <details class="card faq"><summary>Is it free?</summary><p>Yes. DownloadIt is free to use with no ads and no premium tier.</p></details>
+      <details class="card faq"><summary>Do you store my links?</summary><p>No. Links are handled in memory for the duration of the request and then discarded.</p></details>
+      <details class="card faq"><summary>Which formats can I save?</summary><p>MP4 video, and MP3 audio where the server has ffmpeg available.</p></details>
+      <details class="card faq"><summary>Can I download private videos?</summary><p>No. Only public content that the platform allows to be accessed without a login.</p></details>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell footer-row">
+      <p class="footer-legal">© Ifeco Digitals 2026 · Only download content you have the rights to save.</p>
+      <p class="footer-attr">Built and powered by <a href="https://ifecodigitals.com" rel="noopener">Ifeco Digitals</a></p>
+    </div>
+  </footer>
+
+  <!-- Download dialog (native <dialog>, §4.11) -->
+  <dialog id="downloadDialog" aria-labelledby="dialogTitle">
+    <div class="dialog-head">
+      <h2 id="dialogTitle">Preparing your download</h2>
+      <button id="dialogClose" type="button" class="icon-btn" aria-label="Close dialog">×</button>
+    </div>
+    <div class="progress" aria-hidden="false">
+      <div class="progress-track"><div id="progressFill" class="progress-fill"></div></div>
+      <p id="progressText" class="progress-text mono">0%</p>
+    </div>
+    <p id="downloadStatus" class="download-status" role="status" aria-live="polite">Downloading…</p>
+    <div id="dialogActions" class="dialog-actions">
+      <button id="dialogCancel" type="button" class="btn btn-ghost">Cancel</button>
+    </div>
+  </dialog>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

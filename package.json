@@ -1,0 +1,49 @@
+{
+  "name": "downloadit",
+  "version": "2.0.0",
+  "private": false,
+  "description": "Turn a public video URL into a downloadable MP4 or MP3. Built and powered by Ifeco Digitals.",
+  "type": "module",
+  "author": "Ifeco Digitals",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test server.test.js server.engine.test.js frontend.test.js theme.test.js",
+    "typecheck": "tsc --noEmit",
+    "lint:assets": "node tools/lint-assets.mjs",
+    "check": "npm run typecheck && npm run test && node --check server.js && node --check public/app.js && node --check public/downloader.js && node --check public/theme.js && git diff --check && npm run lint:assets",
+    "assets:video": "node tools/make-hero-video.mjs",
+    "assets:icons": "node tools/make-icons.mjs",
+    "assets:fonts": "node tools/make-fonts.mjs",
+    "assets:all": "npm run assets:fonts && npm run assets:video && npm run assets:icons"
+  },
+  "dependencies": {
+    "express": "^4.22.3",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "@ffprobe-installer/ffprobe": "^1.4.1",
+    "@fontsource/poppins": "^5.3.0",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.0.3",
+    "typescript": "^7.0.2"
+  },
+  "keywords": [
+    "video",
+    "downloader",
+    "mp4",
+    "mp3",
+    "yt-dlp"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Ifeanyijosephh/downloadit.git"
+  },
+  "homepage": "https://ifecodigitals.com"
+}
