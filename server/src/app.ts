@@ -16,6 +16,21 @@ export function createApp(cfg: Config, deps: ApiDeps = createDeps(cfg)): express
     next();
   });
 
+  // Request logger for easy debugging: method, path, status, duration.
+  // Set LOG_STATIC=1 to also log static asset requests.
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    const isStatic = !req.path.startsWith('/api');
+    if (isStatic && process.env.LOG_STATIC !== '1') return next();
+    const start = Date.now();
+    res.on('finish', () => {
+      const ms = Date.now() - start;
+      const line = `[${new Date().toISOString()}] ${req.method} ${req.originalUrl} -> ${res.statusCode} (${ms}ms)`;
+      if (res.statusCode >= 500) console.error(line);
+      else console.log(line);
+    });
+    next();
+  });
+
   // §9.6: JSON bodies only. Wrong Content-Type -> 415 before any parsing.
   app.use('/api', (req: Request, res: Response, next: NextFunction) => {
     if (req.method === 'POST' && !req.is('application/json')) {

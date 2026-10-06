@@ -58,6 +58,8 @@ export function resolveController(cfg: Config, limiter: RateLimiter) {
       });
     } catch (err) {
       const e = err as NodeJS.ErrnoException & { stderr?: string; engineUnavailable?: boolean };
+      // Debug: show the engine's raw stderr so failures are diagnosable in the terminal.
+      if (e.stderr) console.error(`[resolve] engine stderr: ${String(e.stderr).split('\n')[0]}`);
       if (e.engineUnavailable) {
         res.status(503).json({ code: 'ENGINE_UNAVAILABLE', hint: 'The download engine is not available.' });
         return;
