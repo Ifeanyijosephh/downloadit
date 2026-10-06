@@ -126,7 +126,9 @@ export function spawnDownload(
   const args =
     format === 'mp3'
       ? [...target.prefix, '-f', 'bestaudio', '-x', '--audio-format', 'mp3', '--no-playlist', '--no-warnings', '-o', '-', url]
-      : [...target.prefix, '-f', 'bv*+ba/b', '--no-playlist', '--no-warnings', '-o', '-', url];
+      : // Single pre-merged file only: yt-dlp cannot merge two streams into
+        // stdout, so a bv*+ba selector would always fail for MP4 here.
+        [...target.prefix, '-f', 'best[ext=mp4]/best', '--no-playlist', '--no-warnings', '-o', '-', url];
 
   return spawn(target.cmd, args, { stdio: ['ignore', 'pipe', 'pipe'] });
 }
