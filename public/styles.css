@@ -22,15 +22,15 @@
   --hero-ink: #ffffff; --hero-muted: #e6ecf7; --hero-faint: #cdd8ea;
   --on-accent-12: rgba(255, 255, 255, 0.12); --on-accent-22: rgba(255, 255, 255, 0.22);
   --glass-bg: rgba(255, 255, 255, 0.62); --glass-brd: rgba(255, 255, 255, 0.55);
-  --glass-shadow: 0 10px 30px rgba(10, 24, 48, 0.12); --glass-sheen: rgba(255, 255, 255, 0.7);
+  --glass-shadow: 0 10px 30px rgba(37, 99, 235, 0.14); --glass-sheen: rgba(255, 255, 255, 0.7);
   --glow-1: rgba(37, 99, 235, 0.4); --glow-2: rgba(129, 140, 248, 0.38); --icon-ink: #0a1830;
   --danger-glow: rgba(185, 28, 28, 0.45);
 
   --radius-sm: 8px; --radius-md: 12px; --radius-lg: 18px; --radius-xl: 26px;
   --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px; --space-7: 48px; --space-8: 64px;
-  --shadow-1: 0 1px 2px rgba(10, 24, 48, 0.06), 0 4px 14px rgba(10, 24, 48, 0.08);
-  --shadow-2: 0 2px 4px rgba(10, 24, 48, 0.08), 0 10px 28px rgba(10, 24, 48, 0.12);
-  --shadow-3: 0 8px 20px rgba(6, 12, 24, 0.22), 0 24px 64px rgba(6, 12, 24, 0.28);
+  --shadow-1: 0 1px 2px rgba(37, 99, 235, 0.06), 0 6px 18px rgba(37, 99, 235, 0.10);
+  --shadow-2: 0 2px 6px rgba(37, 99, 235, 0.10), 0 16px 36px rgba(37, 99, 235, 0.14);
+  --shadow-3: 0 10px 24px rgba(37, 99, 235, 0.16), 0 34px 72px rgba(37, 99, 235, 0.20);
   --dur-fast: 120ms; --dur-base: 200ms; --dur-slow: 340ms;
   --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
 
@@ -46,11 +46,11 @@
   --success: #57d981; --success-soft: #12291c; --danger: #ff8f8f; --danger-soft: #2b1418;
   --scrim: rgba(3, 6, 12, 0.66); --focus: #81aaff;
   --hero-ink: #eef3fb; --hero-muted: #c9d6ea; --hero-faint: #9fb0c9;
-  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 14px rgba(0, 0, 0, 0.4);
-  --shadow-2: 0 2px 4px rgba(0, 0, 0, 0.45), 0 10px 28px rgba(0, 0, 0, 0.5);
-  --shadow-3: 0 8px 20px rgba(0, 0, 0, 0.6), 0 24px 64px rgba(0, 0, 0, 0.66);
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.35), 0 6px 18px rgba(107, 163, 255, 0.10);
+  --shadow-2: 0 2px 6px rgba(0, 0, 0, 0.40), 0 16px 36px rgba(107, 163, 255, 0.14);
+  --shadow-3: 0 10px 24px rgba(0, 0, 0, 0.50), 0 34px 72px rgba(107, 163, 255, 0.18);
   --glass-bg: rgba(13, 20, 32, 0.55); --glass-brd: rgba(255, 255, 255, 0.08);
-  --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.45); --glass-sheen: rgba(255, 255, 255, 0.06);
+  --glass-shadow: 0 10px 30px rgba(107, 163, 255, 0.12); --glass-sheen: rgba(255, 255, 255, 0.06);
   --glow-1: rgba(107, 163, 255, 0.35); --glow-2: rgba(129, 140, 248, 0.3); --icon-ink: #eef3fb;
   --danger-glow: rgba(255, 143, 143, 0.4);
 }
@@ -400,4 +400,20 @@ dialog::backdrop { background: var(--scrim); }
 
 @media (prefers-reduced-motion: reduce) {
   .error-line, .progress-track.indeterminate .progress-fill { animation: none; }
+}
+
+/* ------------------------------------------- paste button (animated solid) -- */
+.paste-btn { display: inline-flex; align-items: center; gap: 6px; }
+.paste-ico { display: block; animation: pasteBob 2.6s var(--ease) infinite; }
+.paste-btn:hover .paste-ico { animation: pasteDrop 0.6s var(--ease); }
+@keyframes pasteBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+@keyframes pasteDrop { 0% { transform: translateY(-5px); opacity: 0.5; } 60% { transform: translateY(1px); } 100% { transform: translateY(0); opacity: 1; } }
+
+/* ------------------------------------------------------- premium polish --- */
+html { scroll-behavior: smooth; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+.card { border-radius: var(--radius-lg); }
+
+@media (prefers-reduced-motion: reduce) {
+  .paste-ico, .paste-btn:hover .paste-ico { animation: none; }
 }

@@ -190,21 +190,29 @@ form.addEventListener('submit', async (e) => {
 
 urlInput.addEventListener('input', render);
 
-// Paste button: read the clipboard into the input (graceful if denied).
+// Paste button: read the clipboard into the input, with honest fallbacks.
 const pasteBtn = $('#pasteBtn');
 if (pasteBtn) {
+  const say = (msg, kind) => { formStatus.textContent = msg; formStatus.dataset.kind = kind || 'info'; };
   pasteBtn.addEventListener('click', async () => {
+    // Clipboard API needs a secure context (HTTPS or localhost) + permission.
+    if (!navigator.clipboard || typeof navigator.clipboard.readText !== 'function') {
+      say('Your browser blocks auto-paste here \u2014 tap the field and press Ctrl/Cmd + V.', 'info');
+      urlInput.focus();
+      return;
+    }
     try {
       const text = await navigator.clipboard.readText();
-      if (text) {
+      if (text && text.trim()) {
         urlInput.value = text.trim();
         render();
-        urlInput.focus();
+        say('Link pasted \u2014 hit Get video.', 'success');
+      } else {
+        say('Your clipboard is empty.', 'info');
       }
+      urlInput.focus();
     } catch {
-      // Clipboard permission denied/unavailable — nudge the user without a scary error.
-      formStatus.textContent = 'Press Ctrl/Cmd + V to paste your link.';
-      formStatus.dataset.kind = 'info';
+      say('Clipboard permission was blocked \u2014 tap the field and press Ctrl/Cmd + V.', 'info');
       urlInput.focus();
     }
   });
