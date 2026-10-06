@@ -21,12 +21,19 @@
   <link rel="icon" type="image/x-icon" href="/assets/favicon.ico" />
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon-180.png" />
 
+  <!-- Preload the fonts the loader + first paint need, so text shows instantly. -->
+  <link rel="preload" href="/fonts/Poppins-Bold.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/Poppins-Regular.woff2" as="font" type="font/woff2" crossorigin />
+
   <!-- Theme the document before first paint (no flash, CSP-safe). -->
   <script src="/theme-boot.js"></script>
   <link rel="stylesheet" href="/styles.css" />
   <link rel="stylesheet" href="/vendor/aos.css" />
 </head>
 <body hidden>
+  <div id="loader" class="loader" role="status" aria-label="Loading DownloadIt">
+    <span class="loader-word" aria-hidden="true"><span>D</span><span>o</span><span>w</span><span>n</span><span>l</span><span>o</span><span>a</span><span>d</span><span>I</span><span>t</span></span>
+  </div>
   <a class="skip" href="#main">Skip to content</a>
 
   <header class="site-header">
@@ -119,27 +126,20 @@
     <section id="how" class="shell section">
       <h2>How it works</h2>
       <ol class="steps">
-        <li class="card step" data-aos="fade-up"><img src="/icons/link.svg" width="56" height="56" alt="" aria-hidden="true" class="step-icon icon-anim" /><h3>Paste</h3><p>Drop in a public video link from any supported platform.</p></li>
-        <li class="card step" data-aos="fade-up" data-aos-delay="100"><img src="/icons/search.svg" width="56" height="56" alt="" aria-hidden="true" class="step-icon icon-anim" /><h3>Preview</h3><p>We fetch the title, length and formats so you know what you'll get.</p></li>
-        <li class="card step" data-aos="fade-up" data-aos-delay="200"><img src="/icons/download-loop.svg" width="56" height="56" alt="" aria-hidden="true" class="step-icon icon-anim" /><h3>Save</h3><p>Choose MP4 or MP3 and the file downloads straight to your device.</p></li>
+        <li class="card step" data-aos="fade-up"><img src="/icons/link.svg" width="56" height="56" alt="" aria-hidden="true" loading="lazy" decoding="async" class="step-icon icon-anim" /><h3>Paste</h3><p>Drop in a public video link from any supported platform.</p></li>
+        <li class="card step" data-aos="fade-up" data-aos-delay="100"><img src="/icons/search.svg" width="56" height="56" alt="" aria-hidden="true" loading="lazy" decoding="async" class="step-icon icon-anim" /><h3>Preview</h3><p>We fetch the title, length and formats so you know what you'll get.</p></li>
+        <li class="card step" data-aos="fade-up" data-aos-delay="200"><img src="/icons/download-loop.svg" width="56" height="56" alt="" aria-hidden="true" loading="lazy" decoding="async" class="step-icon icon-anim" /><h3>Save</h3><p>Choose MP4 or MP3 and the file downloads straight to your device.</p></li>
       </ol>
     </section>
 
     <!-- Platforms -->
     <section id="platforms" class="shell section">
       <h2>Supported platforms</h2>
-      <ul class="platforms">
-        <li class="card plat" data-aos="zoom-in" data-aos-delay="0"><img src="/brands/youtube.svg" width="40" height="40" alt="" aria-hidden="true" class="plat-logo" /><span>YouTube</span></li>
-        <li class="card plat" data-aos="zoom-in" data-aos-delay="40"><img src="/brands/instagram.svg" width="40" height="40" alt="" aria-hidden="true" class="plat-logo" /><span>Instagram</span></li>
-        <li class="card plat" data-aos="zoom-in" data-aos-delay="80"><img src="/brands/tiktok.svg" width="40" height="40" alt="" aria-hidden="true" class="plat-logo" /><span>TikTok</span></li>
-        <li class="card plat" data-aos="zoom-in" data-aos-delay="120"><img src="/brands/x.svg" width="40" height="40" alt="" aria-hidden="true" class="plat-logo" /><span>X / Twitter</span></li>
-        <li class="card plat" data-aos="zoom-in" data-aos-delay="160"><img src="/brands/facebook.svg" width="40" height="40" alt="" aria-hidden="true" class="plat-logo" /><span>Facebook</span></li>
-        <li class="card plat" data-aos="zoom-in" data-aos-delay="200"><img src="/brands/vimeo.svg" width="40" height="40" alt="" aria-hidden="true" class="plat-logo" /><span>Vimeo</span></li>
-        <li class="card plat" data-aos="zoom-in" data-aos-delay="240"><img src="/brands/snapchat.svg" width="40" height="40" alt="" aria-hidden="true" class="plat-logo" /><span>Snapchat</span></li>
-        <li class="card plat" data-aos="zoom-in" data-aos-delay="280"><img src="/brands/pinterest.svg" width="40" height="40" alt="" aria-hidden="true" class="plat-logo" /><span>Pinterest</span></li>
-        <li class="card plat" data-aos="zoom-in" data-aos-delay="320"><img src="/brands/reddit.svg" width="40" height="40" alt="" aria-hidden="true" class="plat-logo" /><span>Reddit</span></li>
-        <li class="card plat" data-aos="zoom-in" data-aos-delay="360"><img src="/assets/icons/3d/linkedin.png" srcset="/assets/icons/3d/linkedin@2x.png 2x" width="40" height="40" alt="" aria-hidden="true" class="plat-logo" /><span>LinkedIn</span></li>
-      </ul>
+      <div class="marquee" id="platformMarquee" aria-label="Supported platforms">
+        <div class="marquee-shift" id="marqueeShift">
+          <div class="marquee-track" id="marqueeTrack"></div>
+        </div>
+      </div>
     </section>
 
     <!-- Promise -->

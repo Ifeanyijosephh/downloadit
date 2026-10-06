@@ -60,6 +60,72 @@ document.body.removeAttribute('hidden');
   }
 })();
 
+/* ------------------------------------------- platforms marquee + loader ----- */
+(function initMarqueeAndLoader() {
+  // Loader: bouncy "DownloadIt" until resources are ready, then fade out.
+  const loader = document.getElementById('loader');
+  if (loader) {
+    loader.querySelectorAll('.loader-word span').forEach((s, i) => {
+      s.style.animationDelay = (i * 0.08).toFixed(2) + 's';
+    });
+    let hidden = false;
+    const hide = () => {
+      if (hidden) return;
+      hidden = true;
+      loader.classList.add('done');
+      setTimeout(() => loader.remove(), 650);
+    };
+    const ready = () =>
+      (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(() => setTimeout(hide, 350));
+    if (document.readyState === 'complete') ready();
+    else window.addEventListener('load', ready);
+    setTimeout(hide, 6000); // safety: never let the loader stick
+  }
+
+  // Platforms marquee: two copies so translateX(-50%) loops seamlessly.
+  const track = document.getElementById('marqueeTrack');
+  if (track) {
+    const items = [
+      ['YouTube', '/brands/youtube.svg'], ['Instagram', '/brands/instagram.svg'], ['TikTok', '/brands/tiktok.svg'],
+      ['X / Twitter', '/brands/x.svg'], ['Facebook', '/brands/facebook.svg'], ['Vimeo', '/brands/vimeo.svg'],
+      ['Snapchat', '/brands/snapchat.svg'], ['Pinterest', '/brands/pinterest.svg'], ['Reddit', '/brands/reddit.svg'],
+      ['LinkedIn', '/assets/icons/3d/linkedin.png'],
+    ];
+    const build = () => items.map(([name, src]) => {
+      const fig = document.createElement('figure');
+      fig.className = 'plat-item';
+      const img = document.createElement('img');
+      img.src = src; img.width = 40; img.height = 40; img.alt = '';
+      img.setAttribute('aria-hidden', 'true'); img.decoding = 'async';
+      const cap = document.createElement('figcaption');
+      cap.textContent = name;
+      fig.append(img, cap);
+      return fig;
+    });
+    build().forEach((n) => track.appendChild(n));
+    build().forEach((n) => track.appendChild(n));
+  }
+
+  // Scroll-direction drift on top of the marquee: down => left, up => right.
+  const shift = document.getElementById('marqueeShift');
+  if (shift) {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let lastY = window.scrollY;
+    let t = null;
+    window.addEventListener('scroll', () => {
+      if (reduce) return;
+      const y = window.scrollY;
+      const dir = y > lastY ? -1 : y < lastY ? 1 : 0;
+      lastY = y;
+      if (dir !== 0) {
+        shift.style.transform = `translateX(${dir * 70}px)`;
+        clearTimeout(t);
+        t = setTimeout(() => { shift.style.transform = 'translateX(0)'; }, 550);
+      }
+    }, { passive: true });
+  }
+})();
+
 /* ------------------------------------------------------------------ store -- */
 let state = INITIAL;
 const guard = createRunGuard();
