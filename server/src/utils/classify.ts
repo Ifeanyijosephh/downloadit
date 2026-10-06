@@ -31,7 +31,7 @@ export function classifyResolveError(text: string): Classified {
     return { code: 'UNSUPPORTED', http: 422, hint: 'The engine does not recognise that URL.' };
   }
   if (/no formats|format.*not available|requested format/.test(s)) {
-    return { code: 'NO_FORMAT', http: 422, hint: 'No downloadable format is available for that video.' };
+    return { code: 'NO_FORMAT', http: 422, hint: 'That video has no single-file MP4 (common for live streams). Try MP3, or use a regular non-live video.' };
   }
   return { code: 'ENGINE_ERROR', http: 500, hint: 'The download engine hit an unexpected error.' };
 }

@@ -24,6 +24,7 @@
   --glass-bg: rgba(255, 255, 255, 0.62); --glass-brd: rgba(255, 255, 255, 0.55);
   --glass-shadow: 0 10px 30px rgba(10, 24, 48, 0.12); --glass-sheen: rgba(255, 255, 255, 0.7);
   --glow-1: rgba(37, 99, 235, 0.4); --glow-2: rgba(129, 140, 248, 0.38); --icon-ink: #0a1830;
+  --danger-glow: rgba(185, 28, 28, 0.45);
 
   --radius-sm: 8px; --radius-md: 12px; --radius-lg: 18px; --radius-xl: 26px;
   --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px; --space-7: 48px; --space-8: 64px;
@@ -51,6 +52,7 @@
   --glass-bg: rgba(13, 20, 32, 0.55); --glass-brd: rgba(255, 255, 255, 0.08);
   --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.45); --glass-sheen: rgba(255, 255, 255, 0.06);
   --glow-1: rgba(107, 163, 255, 0.35); --glow-2: rgba(129, 140, 248, 0.3); --icon-ink: #eef3fb;
+  --danger-glow: rgba(255, 143, 143, 0.4);
 }
 
 /* ------------------------------------------------------------------- base */
@@ -358,4 +360,44 @@ dialog::backdrop { background: var(--scrim); }
 @media (prefers-reduced-motion: reduce) {
   .card:hover, .plat:hover, .promo-card:hover { transform: none; }
   .hero-media::before, .hero-media::after, .hero-inner { animation: none; }
+}
+
+/* ------------------------------------------------- paste button in input -- */
+.input-wrap { position: relative; flex: 1; min-width: 0; display: flex; }
+.input-wrap input { padding-right: 88px; }
+.paste-btn {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  height: 36px; padding: 0 14px; border-radius: 999px;
+  border: 1px solid var(--control-border);
+  background: var(--accent-soft); color: var(--accent-strong);
+  font: inherit; font-size: var(--fs-sm); font-weight: 600; cursor: pointer;
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+}
+.paste-btn:hover { background: var(--accent); color: var(--on-accent); transform: translateY(-50%) scale(1.04); }
+.paste-btn:active { transform: translateY(-50%) scale(0.97); }
+
+/* --------------------------------------------- warning box with red glow -- */
+.error-line {
+  font-family: var(--font-ui);
+  border-color: var(--danger);
+  box-shadow: 0 0 0 1px var(--danger), 0 0 28px var(--danger-glow);
+  animation: dangerPulse 2.4s var(--ease) infinite;
+}
+@keyframes dangerPulse {
+  0%, 100% { box-shadow: 0 0 0 1px var(--danger), 0 0 22px var(--danger-glow); }
+  50% { box-shadow: 0 0 0 1px var(--danger), 0 0 34px var(--danger-glow); }
+}
+
+/* ---------------------------------------------- "alive" indeterminate bar -- */
+.progress-track.indeterminate .progress-fill {
+  width: 40% !important;
+  animation: indeterminate 1.3s var(--ease) infinite;
+}
+@keyframes indeterminate {
+  0% { transform: translateX(-110%); }
+  100% { transform: translateX(320%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .error-line, .progress-track.indeterminate .progress-fill { animation: none; }
 }

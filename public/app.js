@@ -96,6 +96,11 @@ function friendlyMessage(error) {
     PRIVATE_VIDEO: 'That video looks private or was removed. Please try a public link.',
     NOT_FOUND: 'We couldn\u2019t find that video. Double-check the link and try again.',
     URL_BLOCKED: 'That link isn\u2019t allowed. Please use a public video URL.',
+    NO_FORMAT: 'This video has no single-file MP4 (common for live streams). Try MP3, or use a regular non-live video.',
+    FFMPEG_REQUIRED: 'Audio conversion isn\u2019t available on this server right now. Please try MP4 instead.',
+    UNSUPPORTED: 'That link isn\u2019t from a supported platform. Please use a public video URL.',
+    RESTRICTED: 'This video is private, age-restricted, region-locked or needs a login, so it can\u2019t be downloaded.',
+    UNAVAILABLE: 'That video is unavailable \u2014 it may have been removed or made private.',
   };
   if (specific[code]) return specific[code];
   return 'Hang tight \u2014 the platform seems busy or the connection dropped. Please give it a moment and try again.';
@@ -185,6 +190,26 @@ form.addEventListener('submit', async (e) => {
 
 urlInput.addEventListener('input', render);
 
+// Paste button: read the clipboard into the input (graceful if denied).
+const pasteBtn = $('#pasteBtn');
+if (pasteBtn) {
+  pasteBtn.addEventListener('click', async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text) {
+        urlInput.value = text.trim();
+        render();
+        urlInput.focus();
+      }
+    } catch {
+      // Clipboard permission denied/unavailable — nudge the user without a scary error.
+      formStatus.textContent = 'Press Ctrl/Cmd + V to paste your link.';
+      formStatus.dataset.kind = 'info';
+      urlInput.focus();
+    }
+  });
+}
+
 $('#retryBtn').addEventListener('click', () => {
   dispatch({ type: 'RESET' });
   form.requestSubmit();
@@ -212,10 +237,24 @@ async function startDownload(format) {
   const ctl = downloadCtl;
   cancelRequested = false;
 
+  // Feel alive immediately: indeterminate bar + ticking timer until bytes flow.
+  const track = progressFill.parentElement;
+  track.classList.add('indeterminate');
+  progressFill.style.width = '';
+  dlStatus.textContent = 'Working…';
+  let elapsed = 0;
+  const aliveTimer = setInterval(() => {
+    elapsed += 1;
+    if (state.status === 'downloading' && state.progress === 0) {
+      dlStatus.textContent = `Working… ${elapsed}s`;
+    }
+  }, 1000);
+
   // Watchdogs: 5 min total, 75 s with zero progress (stall) (§4.2).
   const total = setTimeout(() => ctl.abort(new Error('TIMEOUT')), 5 * 60 * 1000);
   let stall = setTimeout(() => ctl.abort(new Error('STALL')), 75000);
   const bump = (p) => {
+    if (p > 0) track.classList.remove('indeterminate');
     clearTimeout(stall);
     stall = setTimeout(() => ctl.abort(new Error('STALL')), 75000);
     if (!guard.isStale(run)) dispatch({ type: 'DOWNLOAD_PROGRESS', progress: p });
@@ -256,6 +295,8 @@ async function startDownload(format) {
   } finally {
     clearTimeout(total);
     clearTimeout(stall);
+    clearInterval(aliveTimer);
+    track.classList.remove('indeterminate');
     if (downloadCtl === ctl) downloadCtl = null;
   }
 }
