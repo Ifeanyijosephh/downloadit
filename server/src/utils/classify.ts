@@ -15,6 +15,9 @@ export function classifyResolveError(text: string): Classified {
   if (/maxbuffer|buffer.*out.*of.*bounds|too large|enobufs/.test(s)) {
     return { code: 'METADATA_TOO_LARGE', http: 504, hint: 'The video metadata is too large to process.' };
   }
+  if (/ssl|tls|certificate|connection (reset|aborted|closed|refused)|could not connect|unable to connect|network is unreachable|name or service not known|nodename|temporary failure in name resolution|eof/.test(s)) {
+    return { code: 'NETWORK', http: 502, hint: 'The server could not reach the platform. On this host, outbound traffic to video platforms is blocked.' };
+  }
   if (/private|members only|login required|sign in|log in|age[- ]?restrict|mature/.test(s)) {
     return { code: 'RESTRICTED', http: 422, hint: 'This video is private, age-restricted or requires a login, so it cannot be downloaded.' };
   }
