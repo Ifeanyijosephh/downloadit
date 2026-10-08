@@ -144,3 +144,25 @@ export function spawnDownload(
 
   return spawn(target.cmd, args, { stdio: ['ignore', 'pipe', 'pipe'] });
 }
+
+/**
+ * Spawn the engine to write a finished file to disk (§9.7 merge path).
+ * MP4 needs video+audio merged, which yt-dlp cannot do to stdout, so we let it
+ * merge into a temp file (requires ffmpeg) and the controller streams that file.
+ */
+export function spawnDownloadToFile(
+  cfg: Config,
+  url: string,
+  format: 'mp4' | 'mp3',
+  outPath: string,
+): ChildProcess {
+  const target = resolveYtDlp(cfg);
+  if (!target) throw Object.assign(new Error('ENGINE_UNAVAILABLE'), { engineUnavailable: true });
+
+  const args =
+    format === 'mp3'
+      ? [...target.prefix, '-f', 'bestaudio', '-x', '--audio-format', 'mp3', '--no-playlist', '--no-warnings', '-o', outPath, url]
+      : [...target.prefix, '-f', 'bv*+ba/b', '--merge-output-format', 'mp4', '--no-playlist', '--no-warnings', '-o', outPath, url];
+
+  return spawn(target.cmd, args, { stdio: ['ignore', 'ignore', 'pipe'] });
+}

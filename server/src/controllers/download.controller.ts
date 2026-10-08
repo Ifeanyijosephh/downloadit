@@ -1,11 +1,15 @@
 /** POST /api/download — stream engine stdout with a single settlement path (§9.7-9.10). */
 import type { Request, Response } from 'express';
 import type { ChildProcess } from 'node:child_process';
+import { createReadStream, statSync, unlink } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { randomBytes } from 'node:crypto';
 import { z } from 'zod';
 import type { Config } from '../config.ts';
 import { validateUrl, sanitizeFilename } from '../utils/validate.ts';
 import { classifyResolveError } from '../utils/classify.ts';
-import { spawnDownload, hasYtDlp, hasFfmpeg } from '../utils/engine.ts';
+import { spawnDownload, spawnDownloadToFile, hasYtDlp, hasFfmpeg } from '../utils/engine.ts';
 import { applySecurityHeaders } from '../utils/security.ts';
 import { clientIp } from '../utils/ip.ts';
 import type { RateLimiter } from '../utils/rate-limit.ts';
@@ -55,6 +59,93 @@ export function downloadController(cfg: Config, limiter: RateLimiter, queue: Que
 
     const job = queue.add(clientIp(req, cfg), { url: check.url, format });
     queue.take(job.ip); // mark active (concurrency 1 per IP)
+
+    // MP4: let the engine merge video+audio into a temp file, then stream it.
+    // (yt-dlp cannot merge into a stdout pipe, so separate-stream videos need this.)
+    if (format === 'mp4') {
+      const tmpPath = join(tmpdir(), `dl-${randomBytes(8).toString('hex')}.mp4`);
+      let mchild: ChildProcess;
+      try {
+        mchild = spawnDownloadToFile(cfg, check.url, 'mp4', tmpPath);
+      } catch {
+        queue.fail(job.id, 'ENGINE_UNAVAILABLE');
+        sendJsonError(res, 503, 'ENGINE_UNAVAILABLE', 'The download engine is not available.');
+        return;
+      }
+
+      let mSettled = false;
+      let mHeaders = false;
+      const mErr: Buffer[] = [];
+      mchild.stderr?.on('data', (d: Buffer) => mErr.push(d));
+
+      const cleanup = (): void => { try { unlink(tmpPath, () => {}); } catch { /* ignore */ } };
+      const mkill = (): void => {
+        if (mchild.exitCode === null && mchild.signalCode === null) {
+          mchild.kill('SIGTERM');
+          const t = setTimeout(() => mchild.kill('SIGKILL'), 5000);
+          t.unref?.();
+          mchild.on('close', () => clearTimeout(t));
+        }
+      };
+      const mfail = (code: string, hint: string, status: number): void => {
+        if (mSettled || mHeaders) return;
+        mSettled = true;
+        clearTimeout(total);
+        mkill();
+        cleanup();
+        queue.fail(job.id, code);
+        sendJsonError(res, status, code, hint);
+      };
+
+      const total = setTimeout(() => {
+        if (mHeaders) { mSettled = true; mkill(); cleanup(); queue.fail(job.id, 'STREAM_ABORTED'); res.destroy(); }
+        else mfail('TIMEOUT', 'The download timed out.', 504);
+      }, cfg.downloadTimeoutMs);
+
+      res.on('close', () => {
+        if (!res.writableFinished) {
+          if (!mSettled) { mSettled = true; queue.fail(job.id, 'CLIENT_DISCONNECTED'); }
+          mkill();
+          cleanup();
+        }
+      });
+
+      mchild.on('error', (err) => mfail('ENGINE_ERROR', `Could not start the engine: ${err.message}`, 500));
+
+      mchild.on('close', (code) => {
+        clearTimeout(total);
+        if (code !== 0) {
+          const text = Buffer.concat(mErr).toString('utf8');
+          if (text) {
+            const lines = text.split('\n').map((l) => l.trim()).filter(Boolean);
+            const errLine = lines.find((l) => /^ERROR\b/i.test(l)) || lines[lines.length - 1] || '';
+            console.error(`[download] engine stderr: ${errLine}`);
+          }
+          const c = classifyResolveError(text);
+          mfail(c.code, c.hint, c.http);
+          return;
+        }
+        let size = 0;
+        try { size = statSync(tmpPath).size; } catch { size = 0; }
+        if (size === 0) { mfail('EMPTY_RESPONSE', 'The engine returned no data.', 502); return; }
+
+        const filename = sanitizeFilename(parsed.data.filename || check.platform, 'download');
+        mHeaders = true;
+        applySecurityHeaders(res, cfg);
+        res.status(200);
+        res.setHeader('Content-Type', 'video/mp4');
+        res.setHeader('Content-Length', String(size));
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}.mp4"`);
+        res.setHeader('Cache-Control', 'no-store');
+
+        const rs = createReadStream(tmpPath);
+        rs.on('error', () => { if (!mSettled) { mSettled = true; queue.fail(job.id, 'STREAM_ABORTED'); } cleanup(); res.destroy(); });
+        rs.on('close', cleanup);
+        rs.pipe(res);
+        res.on('finish', () => { if (!mSettled) { mSettled = true; queue.complete(job.id); } cleanup(); });
+      });
+      return;
+    }
 
     let child: ChildProcess;
     try {

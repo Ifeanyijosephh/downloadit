@@ -76,17 +76,11 @@ test('download streams byte-for-byte (20000 bytes)', async () => {
   assert.equal(buf[19999], 999 % 256);
 });
 
-test('midfail: 200 then error -> connection torn down (incomplete, no success)', async () => {
+test('midfail (mp4 file mode): engine error before streaming -> JSON error, no partial file', async () => {
   const res = await post('/api/download', { url: 'https://www.youtube.com/watch?v=midfail', format: 'mp4' });
-  assert.equal(res.status, 200);
-  let bytes = 0;
-  let failed = false;
-  try {
-    const reader = res.body.getReader();
-    for (;;) { const { done, value } = await reader.read(); if (done) break; bytes += value.length; }
-  } catch { failed = true; }
-  assert.ok(failed, 'stream must not complete cleanly');
-  assert.ok(bytes < 20000);
+  assert.notEqual(res.status, 200);
+  const j = await res.json();
+  assert.ok(j.code, 'an error code is returned');
 });
 
 test('empty -> 502', async () => {

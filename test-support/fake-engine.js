@@ -18,6 +18,9 @@ const args = process.argv.slice(2);
 const url = args.find((a) => /^https?:\/\//.test(a)) || '';
 const isResolve = args.includes('--dump-json');
 const marker = process.env.FAKE_MARKER;
+const oIdx = args.indexOf('-o');
+const outArg = oIdx >= 0 ? args[oIdx + 1] : '-';
+const toFile = !!outArg && outArg !== '-';
 
 function main() {
   if (args.includes('--version')) {
@@ -70,16 +73,26 @@ function main() {
   }
 
   if (url.includes('midfail')) {
-    // 200 first (bytes sent), then die -> client must report incomplete.
-    process.stdout.write(Buffer.alloc(4096, 1), () => {
+    // Die after (or without) producing data -> engine error the server reports.
+    if (toFile) {
+      try { fs.writeFileSync(outArg, Buffer.alloc(4096, 1)); } catch {}
       setTimeout(() => process.exit(1), 100);
-    });
+    } else {
+      process.stdout.write(Buffer.alloc(4096, 1), () => {
+        setTimeout(() => process.exit(1), 100);
+      });
+    }
     return;
   }
 
-  /* success: emit a deterministic 20000-byte stream */
+  /* success: a deterministic 20000-byte payload (to file or stdout) */
   const chunk = Buffer.alloc(1000);
   for (let i = 0; i < chunk.length; i++) chunk[i] = i % 256;
+  if (toFile) {
+    const buf = Buffer.concat(Array.from({ length: 20 }, () => chunk));
+    try { fs.writeFileSync(outArg, buf); } catch {}
+    process.exit(0);
+  }
   for (let k = 0; k < 20; k++) process.stdout.write(chunk);
   process.exit(0);
 }
