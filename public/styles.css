@@ -501,3 +501,6 @@ html { scroll-behavior: smooth; }
 .promo-badge { background: var(--accent); color: var(--on-accent); }
 .promo-btn { background: var(--accent); color: var(--on-accent); }
 .promo-btn:hover { background: var(--accent-hover); color: var(--on-accent); }
+
+/* How-it-works solid icons (inline Font Awesome Solid, react-icons fa6s). */
+.step-svg { color: var(--accent); }
