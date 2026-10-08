@@ -18,6 +18,9 @@ export function classifyResolveError(text: string): Classified {
   if (/ssl|tls|certificate|connection (reset|aborted|closed|refused)|could not connect|unable to connect|network is unreachable|name or service not known|nodename|temporary failure in name resolution|eof/.test(s)) {
     return { code: 'NETWORK', http: 502, hint: 'The server could not reach the video platform (connection/SSL failure). This can be transient — try again. If it persists, check this server\u2019s outbound internet access.' };
   }
+  if (/no formats|format.*not available|requested format/.test(s)) {
+    return { code: 'NO_FORMAT', http: 422, hint: 'That video has no single-file MP4 (common for live streams). Try MP3, or use a regular non-live video.' };
+  }
   if (/private|members only|login required|sign in|log in|age[- ]?restrict|mature/.test(s)) {
     return { code: 'RESTRICTED', http: 422, hint: 'This video is private, age-restricted or requires a login, so it cannot be downloaded.' };
   }
@@ -29,9 +32,6 @@ export function classifyResolveError(text: string): Classified {
   }
   if (/not a valid url|unsupported url|unsupported protocol/.test(s)) {
     return { code: 'UNSUPPORTED', http: 422, hint: 'The engine does not recognise that URL.' };
-  }
-  if (/no formats|format.*not available|requested format/.test(s)) {
-    return { code: 'NO_FORMAT', http: 422, hint: 'That video has no single-file MP4 (common for live streams). Try MP3, or use a regular non-live video.' };
   }
   return { code: 'ENGINE_ERROR', http: 500, hint: 'The download engine hit an unexpected error.' };
 }
