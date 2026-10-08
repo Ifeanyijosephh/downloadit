@@ -85,11 +85,12 @@ document.body.removeAttribute('hidden');
   // Platforms marquee: two copies so translateX(-50%) loops seamlessly.
   const track = document.getElementById('marqueeTrack');
   if (track) {
+    const CDN = 'https://cdn.simpleicons.org/';
     const items = [
-      ['YouTube', '/brands/youtube.svg'], ['Instagram', '/brands/instagram.svg'], ['TikTok', '/brands/tiktok.svg'],
-      ['X / Twitter', '/brands/x.svg'], ['Facebook', '/brands/facebook.svg'], ['Vimeo', '/brands/vimeo.svg'],
-      ['Snapchat', '/brands/snapchat.svg'], ['Pinterest', '/brands/pinterest.svg'], ['Reddit', '/brands/reddit.svg'],
-      ['LinkedIn', '/assets/icons/3d/linkedin.png'],
+      ['YouTube', CDN + 'youtube'], ['Instagram', CDN + 'instagram'], ['TikTok', CDN + 'tiktok'],
+      ['X / Twitter', CDN + 'x'], ['Facebook', CDN + 'facebook'], ['Vimeo', CDN + 'vimeo'],
+      ['Snapchat', CDN + 'snapchat'], ['Pinterest', CDN + 'pinterest'], ['Reddit', CDN + 'reddit'],
+      ['LinkedIn', '/assets/icons/3d/linkedin.png'], // Simple Icons CDN no longer ships LinkedIn
     ];
     const build = () => items.map(([name, src]) => {
       const fig = document.createElement('figure');
@@ -97,6 +98,7 @@ document.body.removeAttribute('hidden');
       const img = document.createElement('img');
       img.src = src; img.width = 40; img.height = 40; img.alt = '';
       img.setAttribute('aria-hidden', 'true'); img.decoding = 'async';
+      img.loading = 'lazy'; img.referrerPolicy = 'no-referrer';
       const cap = document.createElement('figcaption');
       cap.textContent = name;
       fig.append(img, cap);

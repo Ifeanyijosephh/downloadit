@@ -476,3 +476,15 @@ html { scroll-behavior: smooth; }
 @media (prefers-reduced-motion: reduce) {
   .loader-word span, .marquee-track { animation: none; }
 }
+
+/* ------------------------------------------------------- brand arrow logo -- */
+.brand-arrow { color: var(--accent); animation: arrowBob 1.8s var(--ease) infinite; }
+@keyframes arrowBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(3px); } }
+
+/* --------------------------------------------- responsive global padding --- */
+.shell { padding-left: clamp(16px, 5vw, 56px); padding-right: clamp(16px, 5vw, 56px); }
+.section { padding-top: clamp(48px, 8vw, 96px); padding-bottom: clamp(48px, 8vw, 96px); }
+.hero-inner { padding-top: clamp(56px, 9vw, 120px); padding-bottom: clamp(56px, 9vw, 120px); }
+.header-row { padding-top: var(--space-3); padding-bottom: var(--space-3); }
+
+@media (prefers-reduced-motion: reduce) { .brand-arrow { animation: none; } }
