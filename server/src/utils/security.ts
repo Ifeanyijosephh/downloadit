@@ -8,7 +8,7 @@ export const CSP = [
   "default-src 'self'",
   "script-src 'self'",
   "style-src 'self'",
-  "img-src 'self' data: https://*.ytimg.net https://i.imgur.com https://cdn.simpleicons.org",
+  "img-src 'self' data: https://*.ytimg.net https://i.imgur.com https://cdn.simpleicons.org https://api.iconify.design",
   "media-src 'self'",
   "font-src 'self'",
   "connect-src 'self'",

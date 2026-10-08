@@ -158,7 +158,7 @@ test('WCAG 2.2 AA contrast in both themes', () => {
 test('markup carries the required a11y + structural hooks', () => {
   assert.ok(/id="formStatus"[^>]*aria-live="polite"/.test(html) || /aria-live="polite"[^>]*id="formStatus"/.test(html), 'formStatus aria-live');
   assert.ok(/<dialog id="downloadDialog"/.test(html), 'native dialog');
-  assert.ok(/id="themeToggle"/.test(html), 'theme toggle');
+  assert.ok(/data-theme="dark"/.test(html), 'dark theme is fixed');
   assert.ok(/id="heroFloat"/.test(html), 'hero floating-icons background');
   assert.ok(/\/vendor\/aos\.js/.test(html), 'AOS motion library wired');
   assert.ok(!/image\/svg\+xml/.test(html), 'no svg link types');

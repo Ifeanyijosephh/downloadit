@@ -23,7 +23,8 @@
   } catch (e) {
     theme = 'light';
   }
-  doc.dataset.theme = theme;
-  doc.style.colorScheme = theme;
+  // Dark theme is fixed (no toggle); ignore stored/system preference.
+  doc.dataset.theme = 'dark';
+  doc.style.colorScheme = 'dark';
   doc.removeAttribute('data-no-theme');
 })();

@@ -7,19 +7,13 @@
  * Built and powered by Ifeco Digitals.
  */
 import { INITIAL, reduce, createRunGuard, apiResolve, apiDownload, ApiError } from './downloader.js';
-import { initTheme } from './theme.js';
-
 const $ = (s) => document.querySelector(s);
 
 /* ------------------------------------------------------------------ theme -- */
-initTheme({
-  root: document.documentElement,
-  media: window.matchMedia('(prefers-color-scheme: dark)'),
-  store: window.localStorage,
-  meta: document.querySelector('meta[name="theme-color"]'),
-  button: $('#themeToggle'),
-});
-// theme-boot.js themed the document before paint; now reveal the body.
+// Dark theme is fixed (no toggle). theme-boot.js set it before first paint;
+// re-assert here so nothing can flip it, then reveal the body.
+document.documentElement.dataset.theme = 'dark';
+document.documentElement.style.colorScheme = 'dark';
 document.body.removeAttribute('hidden');
 
 /* ---------------------------------------------------------- hero + motion -- */
@@ -33,9 +27,11 @@ document.body.removeAttribute('hidden');
     brands.forEach((b, i) => {
       const s = spots[i % spots.length];
       const img = document.createElement('img');
-      img.src = `/brands/${b}.svg`;
+      img.src = `https://cdn.simpleicons.org/${b}`;
       img.alt = '';
       img.setAttribute('aria-hidden', 'true');
+      img.referrerPolicy = 'no-referrer';
+      img.decoding = 'async';
       img.className = 'hero-float-icon';
       img.style.left = s[0] + '%';
       img.style.top = s[1] + '%';

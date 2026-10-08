@@ -488,3 +488,16 @@ html { scroll-behavior: smooth; }
 .header-row { padding-top: var(--space-3); padding-bottom: var(--space-3); }
 
 @media (prefers-reduced-motion: reduce) { .brand-arrow { animation: none; } }
+
+/* ------------------------- sponsored card: light font on dark-blue surface -- */
+.promo-card {
+  background: linear-gradient(120deg, var(--accent-soft), var(--bg-inset));
+  color: var(--hero-ink);
+  border: 1px solid var(--accent);
+  box-shadow: var(--shadow-2);
+}
+.promo-body h3, .promo-body p { color: var(--hero-ink); }
+.promo-body p { opacity: 0.92; }
+.promo-badge { background: var(--accent); color: var(--on-accent); }
+.promo-btn { background: var(--accent); color: var(--on-accent); }
+.promo-btn:hover { background: var(--accent-hover); color: var(--on-accent); }
