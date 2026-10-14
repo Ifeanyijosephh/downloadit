@@ -293,6 +293,13 @@ let currentFormat = 'mp4';
 function openDialog(format) {
   currentFormat = format;
   cancelRequested = false;
+  // Show the resolved thumbnail as a live preview while the video is fetched.
+  const dlgThumb = $('#dlgThumb');
+  if (dlgThumb) {
+    const t = state.result && state.result.thumbnail;
+    if (t && /^https:/.test(t)) { dlgThumb.src = t; dlgThumb.hidden = false; }
+    else { dlgThumb.removeAttribute('src'); dlgThumb.hidden = true; }
+  }
   dialog.showModal();
   startDownload(format);
   // Focus lands on the primary action (§4.11).
@@ -325,16 +332,26 @@ async function startDownload(format) {
   // Watchdogs: 5 min total, 75 s with zero progress (stall) (§4.2).
   const total = setTimeout(() => ctl.abort(new Error('TIMEOUT')), 5 * 60 * 1000);
   let stall = setTimeout(() => ctl.abort(new Error('STALL')), 75000);
+  // A per-download id lets us poll /api/progress for live server-side progress.
+  const jobId = (globalThis.crypto && crypto.randomUUID)
+    ? crypto.randomUUID()
+    : `dl-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  // Progress only ever moves forward: the server fetch and the byte transfer
+  // both report, and we never let the bar jump backwards between phases.
+  let maxProgress = 0;
   const bump = (p) => {
     if (p > 0) track.classList.remove('indeterminate');
     clearTimeout(stall);
     stall = setTimeout(() => ctl.abort(new Error('STALL')), 75000);
-    if (!guard.isStale(run)) dispatch({ type: 'DOWNLOAD_PROGRESS', progress: p });
+    if (p > maxProgress) {
+      maxProgress = p;
+      if (!guard.isStale(run)) dispatch({ type: 'DOWNLOAD_PROGRESS', progress: p });
+    }
   };
 
   try {
     const blob = await apiDownload(
-      { url: urlInput.value.trim(), format },
+      { url: urlInput.value.trim(), format, jobId },
       { signal: ctl.signal, onProgress: bump },
     );
     if (guard.isStale(run)) return;

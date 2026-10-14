@@ -13,6 +13,7 @@ import { dirname } from 'node:path';
 
 import { createApp } from './server/src/app.ts';
 import { loadConfig } from './server/src/config.ts';
+import { setProgress, getProgress, clearProgress } from './server/src/utils/progress.ts';
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
 const FAKE = join(ROOT, 'test-support', 'fake-engine.js');
@@ -158,4 +159,32 @@ test('engine receives --cookies <file> on mp4 download when configured', async (
   } finally {
     delete process.env.FAKE_ARGV_FILE;
   }
+});
+
+test('GET /api/progress returns a stored percent, 404 when unknown', async () => {
+  setProgress('unit-job', 42);
+  const ok = await fetch(`${base}/api/progress/unit-job`);
+  assert.equal(ok.status, 200);
+  assert.equal((await ok.json()).percent, 42);
+  clearProgress('unit-job');
+  assert.equal(getProgress('unit-job'), null);
+  const missing = await fetch(`${base}/api/progress/does-not-exist`);
+  assert.equal(missing.status, 404);
+});
+
+test('live progress is reported via /api/progress while the engine runs', async () => {
+  const jobId = `e2e-progress-${Date.now()}`;
+  const seen = [];
+  const poll = setInterval(async () => {
+    try {
+      const r = await fetch(`${base}/api/progress/${jobId}`);
+      if (r.ok) seen.push((await r.json()).percent);
+    } catch { /* ignore */ }
+  }, 40);
+  const res = await post('/api/download', { url: 'https://www.youtube.com/watch?v=ok', format: 'mp4', jobId });
+  assert.equal(res.status, 200);
+  await res.arrayBuffer();
+  clearInterval(poll);
+  // We must have observed the bar move through intermediate values, not just 100.
+  assert.ok(seen.some((p) => p > 0 && p < 100), `expected intermediate progress, saw ${JSON.stringify(seen)}`);
 });

@@ -10,6 +10,7 @@ import type { Config } from '../config.ts';
 import { validateUrl, sanitizeFilename } from '../utils/validate.ts';
 import { classifyResolveError } from '../utils/classify.ts';
 import { spawnDownload, spawnDownloadToFile, hasYtDlp, hasFfmpeg } from '../utils/engine.ts';
+import { setProgress, clearProgress } from '../utils/progress.ts';
 import { applySecurityHeaders } from '../utils/security.ts';
 import { clientIp } from '../utils/ip.ts';
 import type { RateLimiter } from '../utils/rate-limit.ts';
@@ -19,6 +20,7 @@ const Body = z.object({
   url: z.string(),
   format: z.enum(['mp4', 'mp3']),
   filename: z.string().optional(),
+  jobId: z.string().regex(/^[A-Za-z0-9_-]{1,64}$/).optional(),
 });
 
 const sendJsonError = (res: Response, status: number, code: string, hint: string): void => {
@@ -42,6 +44,7 @@ export function downloadController(cfg: Config, limiter: RateLimiter, queue: Que
       return;
     }
     const { url, format } = parsed.data;
+    const jobId = parsed.data.jobId;
 
     const check = validateUrl(url);
     if (!check.ok) {
@@ -72,13 +75,23 @@ export function downloadController(cfg: Config, limiter: RateLimiter, queue: Que
         sendJsonError(res, 503, 'ENGINE_UNAVAILABLE', 'The download engine is not available.');
         return;
       }
+      if (jobId) setProgress(jobId, 0);
 
       let mSettled = false;
       let mHeaders = false;
       const mErr: Buffer[] = [];
       mchild.stderr?.on('data', (d: Buffer) => mErr.push(d));
+      // Live progress: parse yt-dlp's `[download] NN%` lines off stdout (media
+      // is going to the temp file, so stdout is free for progress/logs).
+      mchild.stdout?.on('data', (d: Buffer) => {
+        if (!jobId) return;
+        const found = d.toString('utf8').match(/\[download\]\s+([0-9.]+)%/g);
+        const lastLine = found && found.length ? found[found.length - 1] : null;
+        const pct = lastLine ? lastLine.match(/([0-9.]+)%/) : null;
+        if (pct && pct[1]) setProgress(jobId, parseFloat(pct[1]));
+      });
 
-      const cleanup = (): void => { try { unlink(tmpPath, () => {}); } catch { /* ignore */ } };
+      const cleanup = (): void => { if (jobId) clearProgress(jobId); try { unlink(tmpPath, () => {}); } catch { /* ignore */ } };
       const mkill = (): void => {
         if (mchild.exitCode === null && mchild.signalCode === null) {
           mchild.kill('SIGTERM');
@@ -128,6 +141,7 @@ export function downloadController(cfg: Config, limiter: RateLimiter, queue: Que
         let size = 0;
         try { size = statSync(tmpPath).size; } catch { size = 0; }
         if (size === 0) { mfail('EMPTY_RESPONSE', 'The engine returned no data.', 502); return; }
+        if (jobId) setProgress(jobId, 100);
 
         const filename = sanitizeFilename(parsed.data.filename || check.platform, 'download');
         mHeaders = true;
@@ -155,6 +169,7 @@ export function downloadController(cfg: Config, limiter: RateLimiter, queue: Que
       sendJsonError(res, 503, 'ENGINE_UNAVAILABLE', 'The download engine is not available.');
       return;
     }
+    if (jobId) setProgress(jobId, 0);
 
     let sentBytes = 0;
     let headersSent = false;
@@ -179,6 +194,7 @@ export function downloadController(cfg: Config, limiter: RateLimiter, queue: Que
       timers.forEach(clearTimeout);
       kill();
       queue.fail(job.id, code);
+      if (jobId) clearProgress(jobId);
       sendJsonError(res, status, code, hint);
     };
 
@@ -190,6 +206,7 @@ export function downloadController(cfg: Config, limiter: RateLimiter, queue: Que
       timers.forEach(clearTimeout);
       kill();
       queue.fail(job.id, 'STREAM_ABORTED');
+      if (jobId) clearProgress(jobId);
       res.destroy();
     };
 
@@ -220,7 +237,14 @@ export function downloadController(cfg: Config, limiter: RateLimiter, queue: Que
     });
 
     const stderrChunks: Buffer[] = [];
-    child.stderr?.on('data', (d: Buffer) => stderrChunks.push(d));
+    child.stderr?.on('data', (d: Buffer) => {
+      stderrChunks.push(d);
+      // For -o - the media is on stdout, so yt-dlp progress lands on stderr.
+      if (jobId) {
+        const m = d.toString('utf8').match(/\[download\]\s+([0-9.]+)%/);
+        if (m && m[1]) setProgress(jobId, parseFloat(m[1]));
+      }
+    });
 
     child.on('error', (err) => {
       failPreByte('ENGINE_ERROR', `Could not start the engine: ${err.message}`, 500);
@@ -273,6 +297,7 @@ export function downloadController(cfg: Config, limiter: RateLimiter, queue: Que
       // We already streamed bytes.
       if (code === 0) {
         settled = true;
+        if (jobId) setProgress(jobId, 100);
         queue.complete(job.id);
         res.end();
       } else {

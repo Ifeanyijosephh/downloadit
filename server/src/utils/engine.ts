@@ -156,10 +156,10 @@ export function spawnDownload(
 
   const args =
     format === 'mp3'
-      ? [...target.prefix, ...cookieArgs(cfg), '-f', 'bestaudio', '-x', '--audio-format', 'mp3', '--no-playlist', '--no-warnings', '-o', '-', url]
+      ? [...target.prefix, ...cookieArgs(cfg), '-f', 'bestaudio', '-x', '--audio-format', 'mp3', '--no-playlist', '--no-warnings', '--newline', '-o', '-', url]
       : // Single pre-merged file only: yt-dlp cannot merge two streams into
         // stdout, so a bv*+ba selector would always fail for MP4 here.
-        [...target.prefix, ...cookieArgs(cfg), '-f', 'best[ext=mp4]/best', '--no-playlist', '--no-warnings', '-o', '-', url];
+        [...target.prefix, ...cookieArgs(cfg), '-f', 'best[ext=mp4]/best', '--no-playlist', '--no-warnings', '--newline', '-o', '-', url];
 
   return spawn(target.cmd, args, { stdio: ['ignore', 'pipe', 'pipe'] });
 }
@@ -180,8 +180,10 @@ export function spawnDownloadToFile(
 
   const args =
     format === 'mp3'
-      ? [...target.prefix, ...cookieArgs(cfg), '-f', 'bestaudio', '-x', '--audio-format', 'mp3', '--no-playlist', '--no-warnings', '-o', outPath, url]
-      : [...target.prefix, ...cookieArgs(cfg), '-f', 'bv*+ba/b', '--merge-output-format', 'mp4', '--no-playlist', '--no-warnings', '-o', outPath, url];
+      ? [...target.prefix, ...cookieArgs(cfg), '-f', 'bestaudio', '-x', '--audio-format', 'mp3', '--no-playlist', '--no-warnings', '--newline', '-o', outPath, url]
+      : [...target.prefix, ...cookieArgs(cfg), '-f', 'bv*+ba/b', '--merge-output-format', 'mp4', '--no-playlist', '--no-warnings', '--newline', '-o', outPath, url];
 
-  return spawn(target.cmd, args, { stdio: ['ignore', 'ignore', 'pipe'] });
+  // stdout carries yt-dlp's `[download] NN%` progress lines (media goes to the
+  // file), so the controller can parse live progress; stderr carries errors.
+  return spawn(target.cmd, args, { stdio: ['ignore', 'pipe', 'pipe'] });
 }

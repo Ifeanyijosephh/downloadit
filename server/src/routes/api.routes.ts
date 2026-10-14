@@ -6,6 +6,7 @@ import { resolveController } from '../controllers/resolve.controller.ts';
 import { downloadController } from '../controllers/download.controller.ts';
 import { createRateLimiter, type RateLimiter } from '../utils/rate-limit.ts';
 import { createQueue, type Queue } from '../queue/in-process-queue.ts';
+import { getProgress } from '../utils/progress.ts';
 
 export interface ApiDeps {
   resolveLimiter: RateLimiter;
@@ -27,6 +28,17 @@ export function buildApiRouter(cfg: Config, deps: ApiDeps): Router {
   router.get('/health', healthController(cfg));
   router.post('/resolve', resolveController(cfg, deps.resolveLimiter));
   router.post('/download', downloadController(cfg, deps.downloadLimiter, deps.queue));
+
+  // Live download progress (cheap in-memory lookup; polled by the client while
+  // the server is still running yt-dlp, before any bytes reach the browser).
+  router.get('/progress/:jobId', (req: Request, res: Response) => {
+    const percent = getProgress(String(req.params.jobId ?? ''));
+    if (percent == null) {
+      res.status(404).json({ code: 'NO_PROGRESS', hint: 'Unknown or expired job.' });
+      return;
+    }
+    res.json({ percent });
+  });
 
   // Correct 405 + Allow for wrong methods on known API paths (§9).
   router.all('/health', (_req: Request, res: Response) => {

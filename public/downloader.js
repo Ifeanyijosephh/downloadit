@@ -112,13 +112,40 @@ export async function apiResolve(url, { signal } = {}) {
  * POST /api/download. Streams the body, reporting progress, and rejects a
  * non-ok response before any bytes are consumed (§4.7).
  */
-export async function apiDownload({ url, format }, { signal, onProgress } = {}) {
+/**
+ * Poll GET /api/progress/:jobId while the server is still fetching, so the bar
+ * moves during the (byte-less) yt-dlp phase. Stops when its signal is aborted.
+ */
+async function pollProgress(jobId, onProgress, signal) {
+  while (!signal.aborted) {
+    try {
+      const r = await fetch(`/api/progress/${encodeURIComponent(jobId)}`, { signal });
+      if (r.ok) {
+        const j = await r.json();
+        if (j && typeof j.percent === 'number') onProgress(j.percent);
+      }
+    } catch {
+      /* transient poll error — keep trying until aborted */
+    }
+    await new Promise((res) => setTimeout(res, 700));
+  }
+}
+
+export async function apiDownload({ url, format, jobId }, { signal, onProgress } = {}) {
+  // Start polling live server-side progress in parallel with the download POST.
+  let pollCtl;
+  if (jobId && onProgress) {
+    pollCtl = new AbortController();
+    if (signal) signal.addEventListener('abort', () => pollCtl.abort(), { once: true });
+    pollProgress(jobId, onProgress, pollCtl.signal).catch(() => {});
+  }
+  try {
   let res;
   try {
     res = await fetch('/api/download', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url, format }),
+      body: JSON.stringify({ url, format, jobId }),
       signal,
     });
   } catch (err) {
@@ -141,4 +168,7 @@ export async function apiDownload({ url, format }, { signal, onProgress } = {}) 
     }
   }
   return new Blob(chunks, { type: res.headers.get('Content-Type') || 'application/octet-stream' });
+  } finally {
+    if (pollCtl) pollCtl.abort();
+  }
 }

@@ -94,9 +94,22 @@ function main() {
   const chunk = Buffer.alloc(1000);
   for (let i = 0; i < chunk.length; i++) chunk[i] = i % 256;
   if (toFile) {
-    const buf = Buffer.concat(Array.from({ length: 20 }, () => chunk));
-    try { fs.writeFileSync(outArg, buf); } catch {}
-    process.exit(0);
+    // Emit yt-dlp-style progress lines (the server parses these) before writing.
+    const steps = [12, 38, 64, 88, 100];
+    let si = 0;
+    const emit = () => {
+      if (si < steps.length) {
+        process.stdout.write(`[download]  ${steps[si].toFixed(1)}% of  1.00MiB at  2.00MiB/s ETA 00:00\n`);
+        si += 1;
+        setTimeout(emit, 90);
+      } else {
+        const buf = Buffer.concat(Array.from({ length: 20 }, () => chunk));
+        try { fs.writeFileSync(outArg, buf); } catch {}
+        process.exit(0);
+      }
+    };
+    emit();
+    return;
   }
   for (let k = 0; k < 20; k++) process.stdout.write(chunk);
   process.exit(0);
