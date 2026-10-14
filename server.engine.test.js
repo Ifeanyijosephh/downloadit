@@ -19,7 +19,7 @@ const FAKE = join(ROOT, 'test-support', 'fake-engine.js');
 const MARKER = join(mkdtempSync(join(tmpdir(), 'di-marker-')), 'killed.txt');
 process.env.FAKE_MARKER = MARKER;
 
-const cfg = { ...loadConfig(), ytDlpPath: FAKE, ffmpegPath: '', resolveTimeoutMs: 1500, downloadIdleTimeoutMs: 60000, downloadTimeoutMs: 60000 };
+const cfg = { ...loadConfig(), ytDlpPath: FAKE, ffmpegPath: '', resolveTimeoutMs: 1500, downloadIdleTimeoutMs: 60000, downloadTimeoutMs: 60000, cookiesFile: '/tmp/fake-cookies.txt' };
 const app = createApp(cfg);
 
 let server;
@@ -124,4 +124,38 @@ test('client disconnect kills the engine (marker written)', async () => {
     await new Promise((r) => setTimeout(r, 100));
   }
   assert.ok(ok, 'engine should have been killed on disconnect');
+});
+
+test('health reports cookies active when COOKIES_FILE is set', async () => {
+  const j = await (await fetch(`${base}/api/health`)).json();
+  assert.equal(j.cookies, true);
+});
+
+test('engine receives --cookies <file> on resolve when configured', async () => {
+  const argvFile = join(dirname(MARKER), 'argv-resolve.txt');
+  process.env.FAKE_ARGV_FILE = argvFile;
+  try {
+    const res = await post('/api/resolve', { url: 'https://www.youtube.com/watch?v=cookietest' });
+    assert.equal(res.status, 200);
+    const argv = readFileSync(argvFile, 'utf8').split('\n');
+    assert.ok(argv.includes('--cookies'), 'expected the --cookies flag');
+    assert.ok(argv.includes('/tmp/fake-cookies.txt'), 'expected the cookies path');
+  } finally {
+    delete process.env.FAKE_ARGV_FILE;
+  }
+});
+
+test('engine receives --cookies <file> on mp4 download when configured', async () => {
+  const argvFile = join(dirname(MARKER), 'argv-download.txt');
+  process.env.FAKE_ARGV_FILE = argvFile;
+  try {
+    const res = await post('/api/download', { url: 'https://www.youtube.com/watch?v=ok', format: 'mp4' });
+    assert.equal(res.status, 200);
+    await res.arrayBuffer();
+    const argv = readFileSync(argvFile, 'utf8').split('\n');
+    assert.ok(argv.includes('--cookies'), 'expected the --cookies flag');
+    assert.ok(argv.includes('/tmp/fake-cookies.txt'), 'expected the cookies path');
+  } finally {
+    delete process.env.FAKE_ARGV_FILE;
+  }
 });

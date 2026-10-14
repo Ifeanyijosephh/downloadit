@@ -42,6 +42,24 @@ export function resolveFfmpeg(cfg: Config): string | null {
   return null;
 }
 
+/**
+ * Optional yt-dlp authentication args. Off by default (public-only). When the
+ * operator sets COOKIES_FILE (a Netscape cookies.txt) or COOKIES_FROM_BROWSER
+ * (e.g. "firefox"), we pass it on every engine call so login-gated platforms
+ * (Instagram, private Facebook) can resolve/download. For self-hosted/personal
+ * use — a public deployment should leave both unset.
+ */
+function cookieArgs(cfg: Config): string[] {
+  if (cfg.cookiesFile) return ['--cookies', cfg.cookiesFile];
+  if (cfg.cookiesFromBrowser) return ['--cookies-from-browser', cfg.cookiesFromBrowser];
+  return [];
+}
+
+/** True when a cookies source is configured (surfaced in /api/health). */
+export function cookiesActive(cfg: Config): boolean {
+  return Boolean(cfg.cookiesFile || cfg.cookiesFromBrowser);
+}
+
 let ytDlpCache: boolean | null = null;
 let ffmpegCache: boolean | null = null;
 
@@ -91,6 +109,7 @@ export function execResolve(cfg: Config, url: string): Promise<Record<string, un
   }
   const args = [
     ...target.prefix,
+    ...cookieArgs(cfg),
     '--dump-json',
     '--no-playlist',
     '--no-warnings',
@@ -137,10 +156,10 @@ export function spawnDownload(
 
   const args =
     format === 'mp3'
-      ? [...target.prefix, '-f', 'bestaudio', '-x', '--audio-format', 'mp3', '--no-playlist', '--no-warnings', '-o', '-', url]
+      ? [...target.prefix, ...cookieArgs(cfg), '-f', 'bestaudio', '-x', '--audio-format', 'mp3', '--no-playlist', '--no-warnings', '-o', '-', url]
       : // Single pre-merged file only: yt-dlp cannot merge two streams into
         // stdout, so a bv*+ba selector would always fail for MP4 here.
-        [...target.prefix, '-f', 'best[ext=mp4]/best', '--no-playlist', '--no-warnings', '-o', '-', url];
+        [...target.prefix, ...cookieArgs(cfg), '-f', 'best[ext=mp4]/best', '--no-playlist', '--no-warnings', '-o', '-', url];
 
   return spawn(target.cmd, args, { stdio: ['ignore', 'pipe', 'pipe'] });
 }
@@ -161,8 +180,8 @@ export function spawnDownloadToFile(
 
   const args =
     format === 'mp3'
-      ? [...target.prefix, '-f', 'bestaudio', '-x', '--audio-format', 'mp3', '--no-playlist', '--no-warnings', '-o', outPath, url]
-      : [...target.prefix, '-f', 'bv*+ba/b', '--merge-output-format', 'mp4', '--no-playlist', '--no-warnings', '-o', outPath, url];
+      ? [...target.prefix, ...cookieArgs(cfg), '-f', 'bestaudio', '-x', '--audio-format', 'mp3', '--no-playlist', '--no-warnings', '-o', outPath, url]
+      : [...target.prefix, ...cookieArgs(cfg), '-f', 'bv*+ba/b', '--merge-output-format', 'mp4', '--no-playlist', '--no-warnings', '-o', outPath, url];
 
   return spawn(target.cmd, args, { stdio: ['ignore', 'ignore', 'pipe'] });
 }

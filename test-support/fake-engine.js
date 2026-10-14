@@ -23,6 +23,11 @@ const outArg = oIdx >= 0 ? args[oIdx + 1] : '-';
 const toFile = !!outArg && outArg !== '-';
 
 function main() {
+  // Test hook: record the exact argv the server passed to the engine.
+  if (process.env.FAKE_ARGV_FILE) {
+    try { fs.writeFileSync(process.env.FAKE_ARGV_FILE, args.join('\n')); } catch {}
+  }
+
   if (args.includes('--version')) {
     console.log('2026.10.06 (fake-engine)');
     process.exit(0);

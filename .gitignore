@@ -5,3 +5,7 @@ node_modules/
 tmp/
 dist/
 .DS_Store
+# Never commit session cookies / secrets
+cookies.txt
+*.cookies.txt
+secrets/

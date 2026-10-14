@@ -14,6 +14,9 @@ export interface Config {
   rateLimitResolve: number;
   rateLimitDownload: number;
   appVersion: string;
+  /** Optional yt-dlp auth (self-hosted). Off unless set; see engine.cookieArgs. */
+  cookiesFile: string;
+  cookiesFromBrowser: string;
 }
 
 /** Numeric env values must be plain digits — "4_000" parses to NaN (§13). */
@@ -38,5 +41,10 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     rateLimitResolve: num(env.RATE_LIMIT_RESOLVE, 20),
     rateLimitDownload: num(env.RATE_LIMIT_DOWNLOAD, 10),
     appVersion: env.APP_VERSION || '2.0.0',
+    // Self-hosted auth for login-gated platforms (Instagram, private Facebook).
+    // COOKIES_FILE: path to a Netscape cookies.txt. COOKIES_FROM_BROWSER: e.g. "firefox".
+    // Both empty by default => public-only. Keep the cookies file OUTSIDE the repo.
+    cookiesFile: env.COOKIES_FILE || '',
+    cookiesFromBrowser: env.COOKIES_FROM_BROWSER || '',
   };
 }
