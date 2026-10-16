@@ -60,6 +60,15 @@ export function cookiesActive(cfg: Config): boolean {
   return Boolean(cfg.cookiesFile || cfg.cookiesFromBrowser);
 }
 
+/**
+ * yt-dlp resilience flags. A single transient hiccup (a 429, a dropped socket,
+ * a flaky extractor call) should not fail an otherwise-good download, so we let
+ * the engine retry on its own. This is the main code-level stability lever for
+ * YouTube/TikTok/X/Pinterest/Instagram/Facebook; the rest is keeping yt-dlp
+ * up to date and supplying cookies for login-gated platforms.
+ */
+const RESILIENCE = ['--retries', '5', '--fragment-retries', '5', '--extractor-retries', '3', '--socket-timeout', '20'];
+
 let ytDlpCache: boolean | null = null;
 let ffmpegCache: boolean | null = null;
 
@@ -110,11 +119,10 @@ export function execResolve(cfg: Config, url: string): Promise<Record<string, un
   const args = [
     ...target.prefix,
     ...cookieArgs(cfg),
+    ...RESILIENCE,
     '--dump-json',
     '--no-playlist',
     '--no-warnings',
-    '--socket-timeout',
-    '15',
     url,
   ];
   return new Promise((resolve, reject) => {
@@ -156,10 +164,10 @@ export function spawnDownload(
 
   const args =
     format === 'mp3'
-      ? [...target.prefix, ...cookieArgs(cfg), '-f', 'bestaudio', '-x', '--audio-format', 'mp3', '--no-playlist', '--no-warnings', '--newline', '-o', '-', url]
+      ? [...target.prefix, ...cookieArgs(cfg), ...RESILIENCE, '-f', 'bestaudio', '-x', '--audio-format', 'mp3', '--no-playlist', '--no-warnings', '--newline', '-o', '-', url]
       : // Single pre-merged file only: yt-dlp cannot merge two streams into
         // stdout, so a bv*+ba selector would always fail for MP4 here.
-        [...target.prefix, ...cookieArgs(cfg), '-f', 'best[ext=mp4]/best', '--no-playlist', '--no-warnings', '--newline', '-o', '-', url];
+        [...target.prefix, ...cookieArgs(cfg), ...RESILIENCE, '-f', 'best[ext=mp4]/best', '--no-playlist', '--no-warnings', '--newline', '-o', '-', url];
 
   return spawn(target.cmd, args, { stdio: ['ignore', 'pipe', 'pipe'] });
 }
@@ -180,8 +188,8 @@ export function spawnDownloadToFile(
 
   const args =
     format === 'mp3'
-      ? [...target.prefix, ...cookieArgs(cfg), '-f', 'bestaudio', '-x', '--audio-format', 'mp3', '--no-playlist', '--no-warnings', '--newline', '-o', outPath, url]
-      : [...target.prefix, ...cookieArgs(cfg), '-f', 'bv*+ba/b', '--merge-output-format', 'mp4', '--no-playlist', '--no-warnings', '--newline', '-o', outPath, url];
+      ? [...target.prefix, ...cookieArgs(cfg), ...RESILIENCE, '-f', 'bestaudio', '-x', '--audio-format', 'mp3', '--no-playlist', '--no-warnings', '--newline', '-o', outPath, url]
+      : [...target.prefix, ...cookieArgs(cfg), ...RESILIENCE, '-f', 'bv*+ba/b', '--merge-output-format', 'mp4', '--no-playlist', '--no-warnings', '--newline', '-o', outPath, url];
 
   // stdout carries yt-dlp's `[download] NN%` progress lines (media goes to the
   // file), so the controller can parse live progress; stderr carries errors.

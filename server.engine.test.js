@@ -141,6 +141,7 @@ test('engine receives --cookies <file> on resolve when configured', async () => 
     const argv = readFileSync(argvFile, 'utf8').split('\n');
     assert.ok(argv.includes('--cookies'), 'expected the --cookies flag');
     assert.ok(argv.includes('/tmp/fake-cookies.txt'), 'expected the cookies path');
+    assert.ok(argv.includes('--retries'), 'expected the --retries resilience flag');
   } finally {
     delete process.env.FAKE_ARGV_FILE;
   }

@@ -155,16 +155,29 @@ const progressText = $('#progressText');
 function friendlyMessage(error) {
   const code = error && error.code;
   const specific = {
+    OFFLINE: 'We couldn\u2019t reach the server. Check your connection and try again.',
+    NETWORK: 'We couldn\u2019t reach the platform just now \u2014 this is usually temporary. Please try again in a moment.',
+    TIMEOUT: 'That took longer than expected and timed out. The platform may be busy \u2014 please try again.',
+    RATE_LIMITED: 'That\u2019s a lot of requests \u2014 please wait about a minute and try again.',
+    ENGINE_ERROR: 'The downloader hit an unexpected problem with this link. Please try again, or try a different link.',
+    ENGINE_UNAVAILABLE: 'The download engine isn\u2019t ready right now. Please try again shortly.',
+    EMPTY_RESPONSE: 'The platform returned no video data. It may be private, live, or removed \u2014 please try another link.',
+    STREAM_ABORTED: 'The download was interrupted partway through. Please try again.',
+    METADATA_TOO_LARGE: 'That video\u2019s details were too large to process. Please try a different link.',
+    MALFORMED: 'The server sent an unreadable response. Please try again.',
+    NO_FORMAT: 'This video has no single-file MP4 (common for live streams). Try Audio (MP3), or use a regular non-live video.',
+    FFMPEG_REQUIRED: 'Audio conversion isn\u2019t available on this server right now. Please try Video (MP4) instead.',
+    UNSUPPORTED: 'That link isn\u2019t from a supported platform. Please use a public video URL.',
+    INVALID_URL: 'That doesn\u2019t look like a valid video link. Please check it and try again.',
+    INVALID_REQUEST: 'That request was missing something. Please paste a link and try again.',
+    RESTRICTED: 'This video is private, age-restricted, region-locked, or needs a login, so it can\u2019t be downloaded here. Please try a public link.',
     LOGIN_REQUIRED: 'This one needs a login, so we can\u2019t fetch it here. Please try a public link.',
-    AGE_RESTRICTED: 'This video is age-restricted, so it can\u2019t be downloaded here.',
+    UNAVAILABLE: 'That video is unavailable \u2014 it may have been removed or made private.',
     PRIVATE_VIDEO: 'That video looks private or was removed. Please try a public link.',
     NOT_FOUND: 'We couldn\u2019t find that video. Double-check the link and try again.',
+    AGE_RESTRICTED: 'This video is age-restricted, so it can\u2019t be downloaded here.',
     URL_BLOCKED: 'That link isn\u2019t allowed. Please use a public video URL.',
-    NO_FORMAT: 'This video has no single-file MP4 (common for live streams). Try MP3, or use a regular non-live video.',
-    FFMPEG_REQUIRED: 'Audio conversion isn\u2019t available on this server right now. Please try MP4 instead.',
-    UNSUPPORTED: 'That link isn\u2019t from a supported platform. Please use a public video URL.',
-    RESTRICTED: 'This video is private, age-restricted, region-locked or needs a login, so it can\u2019t be downloaded.',
-    UNAVAILABLE: 'That video is unavailable \u2014 it may have been removed or made private.',
+    CLIENT_DISCONNECTED: 'The download was cancelled.',
   };
   if (specific[code]) return specific[code];
   return 'Hang tight \u2014 the platform seems busy or the connection dropped. Please give it a moment and try again.';

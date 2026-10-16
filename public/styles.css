@@ -387,6 +387,8 @@ dialog::backdrop { background: var(--scrim); }
   0%, 100% { box-shadow: 0 0 0 1px var(--danger), 0 0 22px var(--danger-glow); }
   50% { box-shadow: 0 0 0 1px var(--danger), 0 0 34px var(--danger-glow); }
 }
+/* Lead the message with a clear warning glyph so it reads as guidance, not noise. */
+.error-line::before { content: "\26A0\FE0F"; margin-inline-end: 8px; }
 
 /* ---------------------------------------------- "alive" indeterminate bar -- */
 .progress-track.indeterminate .progress-fill {

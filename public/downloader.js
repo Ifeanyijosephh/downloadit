@@ -127,7 +127,7 @@ async function pollProgress(jobId, onProgress, signal) {
     } catch {
       /* transient poll error — keep trying until aborted */
     }
-    await new Promise((res) => setTimeout(res, 700));
+    await new Promise((res) => setTimeout(res, 400));
   }
 }
 
